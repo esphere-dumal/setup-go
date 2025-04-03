@@ -8,7 +8,7 @@ import fs from 'fs';
 import os from 'os';
 import {StableReleaseAlias, isSelfHosted} from './utils';
 
-const MANIFEST_URL = `https://raw.githubusercontent.com/action/go-versions/main/versions-manifest.json`;
+const MANIFEST_URL = core.getInput('manifest-url');
 
 type InstallationType = 'dist' | 'manifest';
 
