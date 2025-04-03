@@ -1,0 +1,27 @@
+name: ci-with-custom-manifest
+
+on:
+  # trigger ci test by click Run workflow button in Web
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: esphere-dumal/setup-go@v0.0.0-notfound
+        with:
+          go-version-file: 'go.mod'
+          check-latest: true
+          cache: false
+          manifest-url: https://raw.githubusercontent.com/esphere-dumal/setup-go/main/versions-manifest.json
+
+      - name: Install dependencies
+        run: go mod tidy
+
+      - name: Build
+        run: go build -v ./...
