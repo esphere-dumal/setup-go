@@ -8,10 +8,7 @@ import fs from 'fs';
 import os from 'os';
 import {StableReleaseAlias, isSelfHosted} from './utils';
 
-const MANIFEST_REPO_OWNER = 'actions';
-const MANIFEST_REPO_NAME = 'go-versions';
-const MANIFEST_REPO_BRANCH = 'main';
-const MANIFEST_URL = `https://raw.githubusercontent.com/${MANIFEST_REPO_OWNER}/${MANIFEST_REPO_NAME}/${MANIFEST_REPO_BRANCH}/versions-manifest.json`;
+const MANIFEST_URL = `https://raw.githubusercontent.com/action/go-versions/main/versions-manifest.json`;
 
 type InstallationType = 'dist' | 'manifest';
 
@@ -278,29 +275,7 @@ export async function extractGoArchive(archivePath: string): Promise<string> {
 export async function getManifest(
   auth: string | undefined
 ): Promise<tc.IToolRelease[]> {
-  try {
-    return await getManifestFromRepo(auth);
-  } catch (err) {
-    core.debug('Fetching the manifest via the API failed.');
-    if (err instanceof Error) {
-      core.debug(err.message);
-    }
-  }
   return await getManifestFromURL();
-}
-
-function getManifestFromRepo(
-  auth: string | undefined
-): Promise<tc.IToolRelease[]> {
-  core.debug(
-    `Getting manifest from ${MANIFEST_REPO_OWNER}/${MANIFEST_REPO_NAME}@${MANIFEST_REPO_BRANCH}`
-  );
-  return tc.getManifestFromRepo(
-    MANIFEST_REPO_OWNER,
-    MANIFEST_REPO_NAME,
-    auth,
-    MANIFEST_REPO_BRANCH
-  );
 }
 
 async function getManifestFromURL(): Promise<tc.IToolRelease[]> {
