@@ -19,6 +19,9 @@ inputs:
     description: 'Used to specify the path to a dependency file - go.sum'
   architecture:
     description: 'Target architecture for Go to use. Examples: x86, x64. Will use system architecture by default.'
+  manifests-url:
+    description: "Used to specify the url to the manifests.json"
+    default: "https://raw.githubusercontent.com/action/go-versions/main/versions-manifest.json"
 outputs:
   go-version:
     description: 'The installed Go version. Useful when given a version range as input.'
