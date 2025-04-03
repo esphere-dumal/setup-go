@@ -19,6 +19,15 @@ inputs:
     description: 'Used to specify the path to a dependency file - go.sum'
   architecture:
     description: 'Target architecture for Go to use. Examples: x86, x64. Will use system architecture by default.'
+  manifest-repo-owner:
+    description: 'Used to specify the repo owner of the manifest.json file.'
+    default: 'actions'
+  manifest-repo-name:
+    description: 'Used to specify the repo name of the manifest.json file.'
+    default: 'go-versions'
+  manifest-repo-branch:
+    description: 'Used to specify the repo branch of the manifest.json file.'
+    default: 'main'
 outputs:
   go-version:
     description: 'The installed Go version. Useful when given a version range as input.'

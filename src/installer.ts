@@ -8,11 +8,6 @@ import fs from 'fs';
 import os from 'os';
 import {StableReleaseAlias, isSelfHosted} from './utils';
 
-const MANIFEST_REPO_OWNER = 'actions';
-const MANIFEST_REPO_NAME = 'go-versions';
-const MANIFEST_REPO_BRANCH = 'main';
-const MANIFEST_URL = `https://raw.githubusercontent.com/${MANIFEST_REPO_OWNER}/${MANIFEST_REPO_NAME}/${MANIFEST_REPO_BRANCH}/versions-manifest.json`;
-
 type InstallationType = 'dist' | 'manifest';
 
 export interface IGoVersionFile {
@@ -38,7 +33,10 @@ export interface IGoVersionInfo {
 export async function getGo(
   versionSpec: string,
   checkLatest: boolean,
+  repoOwner: string, 
+  repoName: string,
   auth: string | undefined,
+  branch: string,
   arch = os.arch()
 ) {
   let manifest: tc.IToolRelease[] | undefined;
@@ -48,7 +46,7 @@ export async function getGo(
     versionSpec === StableReleaseAlias.Stable ||
     versionSpec === StableReleaseAlias.OldStable
   ) {
-    manifest = await getManifest(auth);
+    manifest = await getManifest(repoOwner, repoName, auth, branch);
     let stableVersion = await resolveStableVersionInput(
       versionSpec,
       arch,
@@ -75,7 +73,10 @@ export async function getGo(
     const resolvedVersion = await resolveVersionFromManifest(
       versionSpec,
       true,
+	  repoOwner,
+	  repoName,
       auth,
+	  branch,
       arch,
       manifest
     );
@@ -102,7 +103,7 @@ export async function getGo(
   // Try download from internal distribution (popular versions only)
   //
   try {
-    info = await getInfoFromManifest(versionSpec, true, auth, arch, manifest);
+    info = await getInfoFromManifest(versionSpec, true, repoOwner, repoName, auth, branch, arch, manifest);
     if (info) {
       downloadPath = await installGoVersion(info, auth, arch);
     } else {
@@ -150,7 +151,10 @@ export async function getGo(
 async function resolveVersionFromManifest(
   versionSpec: string,
   stable: boolean,
+  repoOwner: string, 
+  repoName: string,
   auth: string | undefined,
+  branch: string,
   arch: string,
   manifest: tc.IToolRelease[] | undefined
 ): Promise<string | undefined> {
@@ -158,7 +162,10 @@ async function resolveVersionFromManifest(
     const info = await getInfoFromManifest(
       versionSpec,
       stable,
+	  repoOwner,
+	  repoName,
       auth,
+	  branch,
       arch,
       manifest
     );
@@ -276,40 +283,46 @@ export async function extractGoArchive(archivePath: string): Promise<string> {
 }
 
 export async function getManifest(
-  auth: string | undefined
+  repoOwner: string, 
+  repoName: string,
+  auth: string | undefined,
+  branch: string
 ): Promise<tc.IToolRelease[]> {
   try {
-    return await getManifestFromRepo(auth);
+    return await getManifestFromRepo(repoOwner, repoName, auth, branch);
   } catch (err) {
     core.debug('Fetching the manifest via the API failed.');
     if (err instanceof Error) {
       core.debug(err.message);
     }
   }
-  return await getManifestFromURL();
+  return await getManifestFromURL(`https://raw.githubusercontent.com/${repoOwner}/${repoName}/${branch}/versions-manifest.json`);
 }
 
 function getManifestFromRepo(
-  auth: string | undefined
+  repoOwner: string, 
+  repoName: string,
+  auth: string | undefined,
+  branch: string
 ): Promise<tc.IToolRelease[]> {
   core.debug(
-    `Getting manifest from ${MANIFEST_REPO_OWNER}/${MANIFEST_REPO_NAME}@${MANIFEST_REPO_BRANCH}`
+    `Getting manifest from ${repoOwner}/${repoName}@${branch}`
   );
   return tc.getManifestFromRepo(
-    MANIFEST_REPO_OWNER,
-    MANIFEST_REPO_NAME,
+    repoOwner,
+    repoName,
     auth,
-    MANIFEST_REPO_BRANCH
+    branch
   );
 }
 
-async function getManifestFromURL(): Promise<tc.IToolRelease[]> {
+async function getManifestFromURL(manifestUrl: string): Promise<tc.IToolRelease[]> {
   core.debug('Falling back to fetching the manifest using raw URL.');
 
   const http: httpm.HttpClient = new httpm.HttpClient('tool-cache');
-  const response = await http.getJson<tc.IToolRelease[]>(MANIFEST_URL);
+  const response = await http.getJson<tc.IToolRelease[]>(manifestUrl);
   if (!response.result) {
-    throw new Error(`Unable to get manifest from ${MANIFEST_URL}`);
+    throw new Error(`Unable to get manifest from ${manifestUrl}`);
   }
   return response.result;
 }
@@ -317,14 +330,17 @@ async function getManifestFromURL(): Promise<tc.IToolRelease[]> {
 export async function getInfoFromManifest(
   versionSpec: string,
   stable: boolean,
+  repoOwner: string, 
+  repoName: string,
   auth: string | undefined,
+  branch: string,
   arch = os.arch(),
   manifest?: tc.IToolRelease[] | undefined
 ): Promise<IGoVersionInfo | null> {
   let info: IGoVersionInfo | null = null;
   if (!manifest) {
     core.debug('No manifest cached');
-    manifest = await getManifest(auth);
+    manifest = await getManifest(repoOwner, repoName, auth, branch);
   }
 
   core.info(`matching ${versionSpec}...`);

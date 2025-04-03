@@ -32,10 +32,17 @@ export async function run() {
 
       const checkLatest = core.getBooleanInput('check-latest');
 
+	  const repoOwner = core.getInput('manifest-repo-owner');
+	  const repoName = core.getInput('manifest-repo-name');	
+	  const branch = core.getInput('manifest-repo-branch');
+
       const installDir = await installer.getGo(
         versionSpec,
         checkLatest,
+		repoOwner,
+		repoName,
         auth,
+		branch,
         arch
       );
 
